@@ -20,10 +20,12 @@ if question:
     with st.chat_message("user"):
         st.write(question)
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            all_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
-            response = ollama.chat(model="llama3.2", messages=all_messages)
-            answer = response["message"]["content"]
-        st.write(answer)
+        all_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
+
+        def stream_answer():
+            for chunk in ollama.chat(model="llama3.2", messages=all_messages, stream=True):
+                yield chunk["message"]["content"]
+
+        answer = st.write_stream(stream_answer())
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
